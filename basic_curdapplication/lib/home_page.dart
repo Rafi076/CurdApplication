@@ -91,10 +91,22 @@ class _HomePageState extends State<HomePage> {
                 // Display each note in a ListTile
                 return ListTile(
                   title: Text(noteText),
-                  trailing: IconButton(
-                    onPressed: () => openNotebox(docID), // Open dialog to update the note
-                    icon: const Icon(Icons.settings),
-                  ),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+
+                      IconButton(
+                        onPressed: () => openNotebox(docID), // Open dialog to update the note
+                        icon: const Icon(Icons.settings),
+                      ),
+
+                      //delete
+                      IconButton(
+                        onPressed: () => firestoreService.deleteNote(docID),// Open dialog to update the note
+                        icon: const Icon(Icons.delete),
+                      ),
+                    ],
+                  )
                 );
               },
             );
