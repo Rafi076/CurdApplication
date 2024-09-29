@@ -1,4 +1,5 @@
 import 'package:basic_curdapplication/firestore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 class HomePage extends StatefulWidget {
@@ -10,34 +11,36 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
 
-  //3 firestore..
+  // Firestore service instance
   final FirestoreService firestoreService = FirestoreService();
 
-  //2 Text controller
+  // Text controller
   final TextEditingController textController = TextEditingController();
 
-  //1 Open a dialog box to add a note
-  void openNotebox() {
+  // Open a dialog box to add or update a note
+  void openNotebox(String? docID) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Add a note'),
         content: TextField(
-
-          //2 Text controller
           controller: textController,
         ),
         actions: [
-          // Button to save the note
           ElevatedButton(
             onPressed: () {
-              //3 Add functionality to save or handle the note
-              firestoreService.addNotes(textController.text);
+              if (docID == null) {
+                // Add a new note
+                firestoreService.addNotes(textController.text);
+              } else {
+                // Update an existing note
+                firestoreService.updatesNote(docID, textController.text);
+              }
 
-              // after add clear the text controller
+              // Clear the text controller after saving or updating
               textController.clear();
 
-              // after clear close the box
+              // Close the dialog box
               Navigator.pop(context);
             },
             child: const Text("Add"),
@@ -58,15 +61,49 @@ class _HomePageState extends State<HomePage> {
         ),
         backgroundColor: Colors.blue,
       ),
-      // Action button
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.only(right: 20, bottom: 35),
-        child: FloatingActionButton(
-          onPressed: openNotebox,
-          child: const Icon(Icons.add),
-          backgroundColor: Colors.blue, // Sets the color to blue
-          shape: const CircleBorder(), // Ensures the button is circular (default shape)
-        ),
+      // Floating action button to add a new note
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => openNotebox(null), // Pass null for adding a new note
+        child: const Icon(Icons.add),
+        backgroundColor: Colors.blue,
+        shape: const CircleBorder(),
+      ),
+
+      body: StreamBuilder<QuerySnapshot>(
+        stream: firestoreService.getNoteStream(),
+        builder: (context, snapshot) {
+          // If we have data, get all the documents
+          if (snapshot.hasData) {
+            List notesList = snapshot.data!.docs;
+
+            // Display the notes in a ListView
+            return ListView.builder(
+              itemCount: notesList.length,
+              itemBuilder: (context, index) {
+                // Get each individual document
+                DocumentSnapshot document = notesList[index];
+                String docID = document.id;
+
+                // Get note from each document
+                Map<String, dynamic> data = document.data() as Map<String, dynamic>;
+                String noteText = data['note'];
+
+                // Display each note in a ListTile
+                return ListTile(
+                  title: Text(noteText),
+                  trailing: IconButton(
+                    onPressed: () => openNotebox(docID), // Open dialog to update the note
+                    icon: const Icon(Icons.settings),
+                  ),
+                );
+              },
+            );
+          } else {
+            return const Center(
+              child: Text("No notes found."),
+            );
+          }
+        },
       ),
     );
   }
