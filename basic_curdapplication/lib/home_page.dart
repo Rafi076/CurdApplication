@@ -25,6 +25,9 @@ class _HomePageState extends State<HomePage> {
         title: const Text('Add a note'),
         content: TextField(
           controller: textController,
+          decoration: const InputDecoration(
+            hintText: 'Enter your note here',
+          ),
         ),
         actions: [
           ElevatedButton(
@@ -43,7 +46,7 @@ class _HomePageState extends State<HomePage> {
               // Close the dialog box
               Navigator.pop(context);
             },
-            child: const Text("Add"),
+            child: const Text("Save"),
           ),
         ],
       ),
@@ -88,25 +91,47 @@ class _HomePageState extends State<HomePage> {
                 Map<String, dynamic> data = document.data() as Map<String, dynamic>;
                 String noteText = data['note'];
 
-                // Display each note in a ListTile
-                return ListTile(
-                  title: Text(noteText),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-
-                      IconButton(
-                        onPressed: () => openNotebox(docID), // Open dialog to update the note
-                        icon: const Icon(Icons.settings),
+                // Display each note inside a shadowed container
+                return Padding(
+                  padding: const EdgeInsets.all(10.0),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.withOpacity(0.5),
+                          spreadRadius: 2,
+                          blurRadius: 5,
+                          offset: const Offset(0, 3), // changes position of shadow
+                        ),
+                      ],
+                    ),
+                    child: ListTile(
+                      title: Text(
+                        noteText,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            onPressed: () => openNotebox(docID), // Open dialog to update the note
+                            icon: const Icon(Icons.settings),
+                          ),
 
-                      //delete
-                      IconButton(
-                        onPressed: () => firestoreService.deleteNote(docID),// Open dialog to update the note
-                        icon: const Icon(Icons.delete),
+                          // Delete
+                          IconButton(
+                            onPressed: () => firestoreService.deleteNote(docID), // Delete the note
+                            icon: const Icon(Icons.delete),
+                          ),
+                        ],
                       ),
-                    ],
-                  )
+                    ),
+                  ),
                 );
               },
             );
