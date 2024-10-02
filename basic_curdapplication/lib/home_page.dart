@@ -1,6 +1,8 @@
 import 'package:basic_curdapplication/firestore.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart'; // Import image picker package
+import 'dart:io'; // For handling image files
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -16,6 +18,10 @@ class _HomePageState extends State<HomePage> {
   // Text controller
   final TextEditingController textController = TextEditingController();
 
+  // Image picker instance
+  final ImagePicker _picker = ImagePicker();
+  File? _selectedImage; // To store the selected image
+
   // Boolean for tracking dark mode
   bool isDarkMode = false;
 
@@ -25,30 +31,78 @@ class _HomePageState extends State<HomePage> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Add a note'),
-        content: TextField(
-          controller: textController,
-          decoration: const InputDecoration(
-            hintText: 'Enter your note here',
-          ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Image box
+            GestureDetector(
+              onTap: () async {
+                final XFile? pickedFile =
+                await _picker.pickImage(source: ImageSource.gallery);
+                if (pickedFile != null) {
+                  setState(() {
+                    _selectedImage = File(pickedFile.path); // Store the selected image
+                  });
+                }
+              },
+              child: _selectedImage != null
+                  ? Image.file(
+                _selectedImage!,
+                height: 150,
+                width: 150,
+                fit: BoxFit.cover,
+              )
+                  : Container(
+                height: 150,
+                width: 150,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: Colors.black,
+                    width: 2,
+                  ),
+                ),
+                child: const Icon(Icons.add_a_photo, size: 50),
+              ),
+            ),
+            const SizedBox(height: 10),
+            // Note input
+            TextField(
+              controller: textController,
+              decoration: const InputDecoration(
+                hintText: 'Enter your note here',
+              ),
+            ),
+          ],
         ),
         actions: [
           ElevatedButton(
             onPressed: () {
               if (docID == null) {
-                // Add a new note
+                // Add a new note with the image (if selected)
                 firestoreService.addNotes(textController.text);
               } else {
-                // Update an existing note
+                // Update an existing note with the image (if selected)
                 firestoreService.updatesNote(docID, textController.text);
               }
 
               // Clear the text controller after saving or updating
               textController.clear();
+              _selectedImage = null; // Reset selected image
 
               // Close the dialog box
               Navigator.pop(context);
             },
             child: const Text("Save"),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              textController.clear();
+              _selectedImage = null; // Reset selected image
+              Navigator.pop(context); // Close dialog without saving
+            },
+            child: const Text("Cancel"),
           ),
         ],
       ),
