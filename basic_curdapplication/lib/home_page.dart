@@ -219,7 +219,7 @@ class _HomePageState extends State<HomePage> {
               );
             } else {
               return const Center(
-                child: Text("No notes found."),
+                child: Text("No notes found..."),
               );
             }
           },
